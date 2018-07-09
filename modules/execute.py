@@ -27,6 +27,7 @@ BRAINFUCK = ('brainfuck', 0)
 LUA = ('lua', 1)
 DART = ('dart', 2)
 KOTLIN = ('kotlin', 1)
+JAVA = ('java', 0)
 
 languages = {
     'kt': KOTLIN,
@@ -50,6 +51,7 @@ languages = {
     'haskell': HASKELL,
     'brainfuck': BRAINFUCK,
     'bf': BRAINFUCK,
+    'java': JAVA,
 }
 
 

@@ -1,5 +1,4 @@
 import asyncio
-from dataclasses import dataclass
 
 import aiohttp
 
@@ -20,12 +19,17 @@ def post(url, data=None, json=None, **kwargs):
     return asyncio.get_event_loop().run_in_executor(None, lambda *_: requests.post(url, data, json, **kwargs))
 
 
-@dataclass
 class ExecuteResponse(object):
     output: str
     cpu_time: float
     memory: int
     status_code: int
+
+    def __init__(self, output: str, cpu_time: float, memory: int, status_code: int):
+        self.output: str = output
+        self.cpu_time: float = cpu_time
+        self.memory: int = memory
+        self.status_code: int = status_code
 
 
 def parse_execute_response(response: dict) -> ExecuteResponse:

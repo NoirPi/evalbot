@@ -7,7 +7,6 @@ from discord import Embed, Color, Message, Guild, TextChannel, Member
 from discord.ext.commands import Bot
 
 from compile_api import execute
-from filter import verify
 
 CODE_BLOCK_REGEX: Pattern = re.compile("```(?P<lang>.*)\n(?P<code>[\\s\\S]*?)```")
 INPUT_BLOCK_REGEX: Pattern = re.compile("input[: \t\n]*```(?P<lang>.*)?\n(?P<text>[\\s\\S]*?)```", re.IGNORECASE)
@@ -92,8 +91,6 @@ class ExecuteCog(object):
         if not author.guild_permissions.manage_messages:
             self.last_messaged[author.id] = datetime.now()
         language, version = languages[lang]
-        if not verify(message, language):
-            return
         response = await execute(code, language, version)
         if response.status_code == 429:
             return await channel.send(

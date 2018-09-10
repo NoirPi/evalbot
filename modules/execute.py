@@ -52,6 +52,7 @@ languages = {
     'brainfuck': BRAINFUCK,
     'bf': BRAINFUCK,
     'java': JAVA,
+    'php': PHP,
 }
 
 

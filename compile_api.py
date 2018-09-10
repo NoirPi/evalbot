@@ -1,49 +1,57 @@
-import asyncio
+import base64
+from io import BytesIO
+from typing import Optional, List, Union
 
 import aiohttp
+from discord import File
 
-from config import jdoodle_id, jdoodle_secret
-
-EXECUTE_ENDPOINT = "https://api.jdoodle.com/v1/execute"
+EXECUTE_ENDPOINT = "http://rextester.com/rundotnet/api"
 
 
 def get_parameters(**kwargs):
-    return dict(
-        clientId=jdoodle_id,
-        clientSecret=jdoodle_secret,
-        **kwargs,
-    )
-
-
-def post(url, data=None, json=None, **kwargs):
-    return asyncio.get_event_loop().run_in_executor(None, lambda *_: requests.post(url, data, json, **kwargs))
+    return kwargs
 
 
 class ExecuteResponse(object):
-    output: str
-    cpu_time: float
-    memory: int
-    status_code: int
 
-    def __init__(self, output: str, cpu_time: float, memory: int, status_code: int):
-        self.output: str = output
-        self.cpu_time: float = cpu_time
-        self.memory: int = memory
-        self.status_code: int = status_code
+    def __init__(self, warnings: Optional[str], errors: Optional[str], output: str, stats, files):
+        self.output: Optional[str] = output
+        self.warnings: Optional[str] = warnings
+        self.errors: Optional[str] = errors
+        self.stats: str = stats
+        self.files: Optional[List[str]] = files
+
+    @property
+    def discord_files(self) -> List[File]:
+        if not self.files:
+            return []
+
+        def convert_file(b64, i):
+            bytesio = BytesIO()
+            bytesio.write(base64.b64decode(b64))
+            bytesio.seek(0)
+            return File(bytesio, filename=f'output{i}.png')
+
+        return [convert_file(b64, i) for i, b64 in enumerate(self.files)]
 
 
 def parse_execute_response(response: dict) -> ExecuteResponse:
-    memory = response['memory']
-    output = response['output']
-    cpu_time = response['cpuTime']
-    status_code = response['statusCode']
-    return ExecuteResponse(output, cpu_time, memory, status_code)
+    warnings = response['Warnings']
+    errors = response['Errors']
+    output = response['Result']
+    stats = response['Stats']
+    files = response['Files']
+    return ExecuteResponse(warnings, errors, output, stats, files)
 
 
-async def execute(code: str, language: str, version: str) -> ExecuteResponse:
+async def execute(code: str, language: Union[str, int]) -> ExecuteResponse:
     async with aiohttp.ClientSession() as session:
-        response = await session.post(EXECUTE_ENDPOINT, json=get_parameters(
-            script=code,
-            language=language,
-            versionIndex=version))
+        print(code)
+        print(language)
+        response = await session.post(EXECUTE_ENDPOINT, data=get_parameters(
+            Program=code,
+            LanguageChoice=language,
+            Input="",
+            CompilerArgs="",
+        ))
         return parse_execute_response(await response.json())

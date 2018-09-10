@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Pattern
 
-from discord import Embed, Color, Message, Guild, TextChannel, Member
+from discord import Embed, Message, Guild, TextChannel, Member
 from discord.ext.commands import Bot
 
 from compile_api import execute
@@ -11,29 +11,29 @@ from compile_api import execute
 CODE_BLOCK_REGEX: Pattern = re.compile("```(?P<lang>.*)\n(?P<code>[\\s\\S]*?)```")
 INPUT_BLOCK_REGEX: Pattern = re.compile("input[: \t\n]*```(?P<lang>.*)?\n(?P<text>[\\s\\S]*?)```", re.IGNORECASE)
 
-PYTHON_3 = ('python3', 2)
-NODEJS = ('nodejs', 2)
-C_LANG = ('c', 3)
-CPP = ('cpp14', 2)
-PHP = ('php', 2)
-PYTHON_2 = ('python2', 1)
-RUBY = ('ruby', 2)
-GO_LANG = ('go', 2)
-SCALA = ('scala', 2)
-BASH = ('bash', 2)
-CSHARP = ('csharp', 2)
-HASKELL = ('haskell', 2)
-BRAINFUCK = ('brainfuck', 0)
-LUA = ('lua', 1)
-DART = ('dart', 2)
-KOTLIN = ('kotlin', 1)
-JAVA = ('java', 0)
+PYTHON_3 = 24
+NODEJS = 17
+C_LANG = 6
+CPP = 7
+PHP = 8
+PYTHON_2 = 5
+RUBY = 12
+GO_LANG = 20
+SCALA = 21
+BASH = 38
+CSHARP = 1
+HASKELL = 11
+BRAINFUCK = 44
+LUA = 14
+KOTLIN = 43
+JAVA = 4
+R_LANG = 31
 
 languages = {
+    'r': R_LANG,
+    'rlang': R_LANG,
     'kt': KOTLIN,
     'kotlin': KOTLIN,
-    'dart': DART,
-    'dt': DART,
     'lua': LUA,
     'py': PYTHON_3,
     'python': PYTHON_3,
@@ -88,29 +88,28 @@ class ExecuteCog(object):
                 embed=Embed(
                     description=f"You are not allowed to eval code again. Check again in "
                                 f"{(timedelta(seconds=30)-delta).seconds}secs"))
-        if not author.guild_permissions.manage_messages:
+        if not author.guild_permissions.manage_messages and not author.id == 310702108997320705:
             self.last_messaged[author.id] = datetime.now()
-        language, version = languages[lang]
-        response = await execute(code, language, version)
-        if response.status_code == 429:
-            return await channel.send(
-                embed=Embed(
-                    color=Color.blurple(),
-                    description="The daily ratelimit for our API is reached. A great alternative is [Ideone]("
-                                "https://ideone.com/) or [Repl.it](https://repl.it/)"))
-        if response.status_code == 401:
-            return await channel.send(
-                embed=Embed(
-                    color=Color.red(),
-                    description="Our API credentials are invalid. Please contact the bot owner"))
-        memory = response.memory
+        language = languages[lang]
+        print(language)
+        response = await execute(code, language)
         output = response.output
-        cpu_time = response.cpu_time
+        stats = response.stats
+        warnings = response.warnings
+        errors = response.errors
+        files = response.discord_files
+        em = Embed(
+            title="Executed your code",
+            description=f"```\n{output}```"
+        ).set_footer(text=stats)
+        if warnings:
+            em.add_field(name="Warnings", value=f'```\n{warnings}```')
+        if errors:
+            em.add_field(name="Errors", value=f'```\n{errors}```')
         await channel.send(
-            embed=Embed(
-                title="Executed your code",
-                description=f"```\n{output}```"
-            ).set_footer(text=f"Executed in {cpu_time}s. Memory: {memory}"))
+            embed=em,
+            files=files if len(files) > 0 else None
+        )
 
 
 def setup(bot: Bot):

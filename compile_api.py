@@ -46,12 +46,10 @@ def parse_execute_response(response: dict) -> ExecuteResponse:
 
 async def execute(code: str, language: Union[str, int]) -> ExecuteResponse:
     async with aiohttp.ClientSession() as session:
-        print(code)
-        print(language)
-        response = await session.post(EXECUTE_ENDPOINT, data=get_parameters(
+        response = await session.get(EXECUTE_ENDPOINT, data=get_parameters(
             Program=code,
             LanguageChoice=language,
             Input="",
             CompilerArgs="",
         ))
-        return parse_execute_response(await response.json())
+        return parse_execute_response(await response.json(content_type=None))

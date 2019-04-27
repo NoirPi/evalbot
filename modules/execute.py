@@ -3,13 +3,15 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Pattern
 
-from discord import Embed, Message, Guild, TextChannel, Member
+from discord import Embed, Guild, Member, Message, TextChannel
+from discord.ext import commands
 from discord.ext.commands import Bot
 
 from compile_api import execute
 
 CODE_BLOCK_REGEX: Pattern = re.compile("```(?P<lang>.*)\n(?P<code>[\\s\\S]*?)```")
-INPUT_BLOCK_REGEX: Pattern = re.compile("input[: \t\n]*```(?P<lang>.*)?\n(?P<text>[\\s\\S]*?)```", re.IGNORECASE)
+INPUT_BLOCK_REGEX: Pattern = \
+    re.compile("input[: \t\n]*```(?P<lang>.*)?\n(?P<text>[\\s\\S]*?)```", re.IGNORECASE)
 
 PYTHON_3 = 24
 NODEJS = 17
@@ -56,7 +58,7 @@ languages = {
 }
 
 
-class ExecuteCog(object):
+class ExecuteCog(commands.Cog, object):
     def __init__(self, bot: Bot):
         self.bot: Bot = bot
         self.last_messaged = defaultdict(lambda: datetime.fromtimestamp(0))
@@ -89,7 +91,7 @@ class ExecuteCog(object):
                 embed=Embed(
                     description=f"You are not allowed to eval code again. Check again in "
                                 f"{(timedelta(seconds=30)-delta).seconds}secs"))
-        if not author.guild_permissions.manage_messages and not author.id == 310702108997320705:
+        if not author.guild_permissions.manage_messages and not author.id == 280766063472541697:
             self.last_messaged[author.id] = datetime.now()
         language = languages[lang]
         print(language)

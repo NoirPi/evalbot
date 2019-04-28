@@ -1,15 +1,16 @@
 import re
-from typing import List, Dict, Pattern
+from typing import Dict, List, Pattern
 
 import discord
-from discord import Embed, Color
+from discord import Color, Embed
 from discord.ext import commands
-from discord.ext.commands import Context as CommandContext, Bot, is_owner, command
+from discord.ext.commands import Bot, command, Context as CommandContext, is_owner
 
 from util import load_all_modules
 
 REPLACEMENTS: Dict[Pattern, str] = {
-    re.compile(r'<@!?(?P<id>[0-9]+)>'): '(guild.get_member({id}) if guild is not None else client.get_user({id}))',
+    re.compile(r'<@!?(?P<id>[0-9]+)>'): '(guild.get_member({id}) if guild is not None '
+                                        'else client.get_user({id}))',
     re.compile(r'<#(?P<id>[0-9]+)>'): '(discord.utils.get(all_channels, id={id}))',
     re.compile(r'<@&(?P<id>[0-9]+)>'): '(discord.utils.get(all_roles, id={id}))',
     # Maybe later emoji support
@@ -35,7 +36,8 @@ async def handle_eval(message: discord.Message, client: discord.Client, to_eval:
         'all_roles': all_roles,
         'client': client,
         'discord': discord,
-        'print': (lambda *text: client.loop.create_task(channel.send(' '.join(text))))
+        'print': (lambda *text: client.loop.create_task(channel.send(' '.join(text)))),
+        'guild': channel.guild if hasattr(channel, 'guild') else None,
     }
     if channel.guild is not None:
         variables['guild'] = channel.guild
@@ -53,14 +55,16 @@ async def handle_eval(message: discord.Message, client: discord.Client, to_eval:
         exec(code, _globals, _locals)
     except Exception as e:
         await message.channel.send(
-            embed=discord.Embed(color=discord.Color.red(), description="Compiler Error: `%s`" % (str(e))))
+            embed=discord.Embed(color=discord.Color.red(),
+                                description="Compiler Error: `%s`" % (str(e))))
         return
     result = {**_globals, **_locals}
     try:
         result = await result["code"](**variables)
     except Exception as e:
         await message.channel.send(
-            embed=discord.Embed(color=discord.Color.red(), description="Runtime Error: `%s`" % (str(e))))
+            embed=discord.Embed(color=discord.Color.red(),
+                                description="Runtime Error: `%s`" % (str(e))))
         return
 
     return await channel.send(
@@ -69,7 +73,7 @@ async def handle_eval(message: discord.Message, client: discord.Client, to_eval:
             description="📥 Evaluation success: ```py\n%r\n```" % result))
 
 
-class AdminCog(object):
+class AdminCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
 
@@ -104,7 +108,8 @@ class AdminCog(object):
             for extension in extensions:
                 try:
                     self.bot.load_extension(extension)
-                except:
+                except Exception as e:
+                    print(e)
                     await ctx.send(
                         embed=Embed(
                             title=f"Failed to load module `{extension}`",

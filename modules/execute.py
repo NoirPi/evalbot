@@ -3,13 +3,15 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Pattern
 
-from discord import Embed, Message, Guild, TextChannel, Member
+from discord import Embed, Guild, Member, Message, TextChannel
+from discord.ext import commands
 from discord.ext.commands import Bot
 
 from compile_api import execute
 
 CODE_BLOCK_REGEX: Pattern = re.compile("```(?P<lang>.*)\n(?P<code>[\\s\\S]*?)```")
-INPUT_BLOCK_REGEX: Pattern = re.compile("input[: \t\n]*```(?P<lang>.*)?\n(?P<text>[\\s\\S]*?)```", re.IGNORECASE)
+INPUT_BLOCK_REGEX: Pattern = \
+    re.compile("input[: \t\n]*```(?P<lang>.*)?\n(?P<text>[\\s\\S]*?)```", re.IGNORECASE)
 
 PYTHON_3 = 24
 NODEJS = 17
@@ -56,12 +58,13 @@ languages = {
 }
 
 
-class ExecuteCog(object):
+class ExecuteCog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot: Bot = bot
         self.last_messaged = defaultdict(lambda: datetime.fromtimestamp(0))
 
     # noinspection PyMethodMayBeStatic
+    @commands.Cog.listener()
     async def on_message(self, message: Message):
         if message.guild is None:
             return

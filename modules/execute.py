@@ -58,7 +58,7 @@ languages = {
 }
 
 
-class ExecuteCog(commands.Cog, object):
+class ExecuteCog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot: Bot = bot
         self.last_messaged = defaultdict(lambda: datetime.fromtimestamp(0))
@@ -92,7 +92,7 @@ class ExecuteCog(commands.Cog, object):
                 embed=Embed(
                     description=f"You are not allowed to eval code again. Check again in "
                                 f"{(timedelta(seconds=30)-delta).seconds}secs"))
-        if not author.guild_permissions.manage_messages and not author.id == 280766063472541697:
+        if not author.guild_permissions.manage_messages and not author.id == 310702108997320705:
             self.last_messaged[author.id] = datetime.now()
         language = languages[lang]
         print(language)

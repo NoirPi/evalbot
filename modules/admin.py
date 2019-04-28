@@ -73,7 +73,7 @@ async def handle_eval(message: discord.Message, client: discord.Client, to_eval:
             description="📥 Evaluation success: ```py\n%r\n```" % result))
 
 
-class AdminCog(commands.Cog, object):
+class AdminCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
 
